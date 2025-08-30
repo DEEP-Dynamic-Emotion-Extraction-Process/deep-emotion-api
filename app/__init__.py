@@ -5,7 +5,7 @@ from celery import Celery, Task
 
 from config import config_by_name
 from .extensions import db, ma, migrate, jwt, cors
-from .api import api_v1_bp # Importa o blueprint principal da API
+from .api import api_v2_bp # Importa o blueprint principal da API
 
 # Define o nome do nosso pacote de tarefas para o Celery
 CELERY_TASK_LIST = [
@@ -42,6 +42,6 @@ def create_app(config_name='development'):
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}}) # Configura o CORS
 
     # Registra os Blueprints (nossos controllers da API)
-    app.register_blueprint(api_v1_bp)
+    app.register_blueprint(api_v2_bp)
 
     return app
