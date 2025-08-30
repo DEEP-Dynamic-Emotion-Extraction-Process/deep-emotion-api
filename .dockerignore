@@ -1,0 +1,28 @@
+# .dockerignore
+
+# Ambiente virtual e caches do Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos de IDE e sistema
+.idea/
+.vscode/
+.DS_Store
+
+# Git e Docker
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Arquivos de segredos (serão injetados em tempo de execução)
+.env
+
+# Pasta de instância e logs locais
+instance/
+*.log

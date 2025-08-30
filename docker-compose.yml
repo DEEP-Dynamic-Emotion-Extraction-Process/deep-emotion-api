@@ -1,0 +1,45 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  # Serviço do Redis: Nosso message broker para o Celery
+  redis:
+    image: redis:7-alpine
+    container_name: deep_redis
+    restart: unless-stopped
+    ports:
+      # Expondo a porta para o host (opcional, útil para debug)
+      - "6379:6379"
+
+  # Serviço da API Flask: Roda o servidor web Gunicorn
+  api:
+    container_name: deep_api
+    build: .  # Constrói a imagem usando o Dockerfile na pasta atual
+    restart: unless-stopped
+    ports:
+      - "5000:5000" # Mapeia a porta 5000 do host para a 5000 do contêiner
+    volumes:
+      # Monta o código local no contêiner para desenvolvimento (hot-reload)
+      - .:/app
+    env_file:
+      # Carrega as variáveis de ambiente do arquivo .env
+      - .env
+    command: >
+      sh -c "flask db upgrade && gunicorn --bind 0.0.0.0:5000 run:app"
+    depends_on:
+      - redis # Garante que o Redis inicie antes da API
+
+  # Serviço do Celery Worker: Roda o processo que consome as tarefas
+  worker:
+    container_name: deep_worker
+    build: . # Usa a mesma imagem da API
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    command: celery -A celery_worker.celery worker --loglevel=info
+    depends_on:
+      - redis
+      - api # Garante que a API (e o DB) esteja pronta antes de começar a processar

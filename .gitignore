@@ -1,8 +1,85 @@
-# Environments
+# --- Arquivos de Configuração Local e Segredos ---
+# EXTREMAMENTE IMPORTANTE: Estes arquivos contêm senhas, chaves de API e outras
+# informações sensíveis. NUNCA devem ser enviados para o repositório.
 .env
-.envrc
-.venv
-env/
-venv/
+.flaskenv
+config.local.py
 
-/uploads
+# --- Ambientes Virtuais do Python ---
+# A pasta do ambiente virtual contém todas as bibliotecas instaladas e não
+# deve ser versionada. As dependências são gerenciadas pelo requirements.txt.
+venv/
+env/
+.venv/
+.env/
+
+# --- Arquivos de Bytecode e Cache do Python ---
+# São arquivos gerados automaticamente pelo interpretador Python para otimização.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Cache de Ferramentas de Teste e Qualidade ---
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+
+# --- Pasta 'instance' do Flask ---
+# Usada para configurações locais, chaves secretas ou bancos de dados SQLite
+# que não devem ser versionados.
+instance/
+/instance/*
+
+# --- Arquivos de Banco de Dados Locais ---
+# Para desenvolvimento local, você pode usar um banco de dados simples.
+*.sqlite
+*.sqlite3
+*.db
+
+# --- Logs ---
+# Arquivos de log são específicos do ambiente e podem crescer muito.
+*.log
+logs/
+
+# --- Arquivos de Distribuição/Pacotes Python ---
+# Gerados ao criar um pacote distribuível da sua aplicação.
+build/
+dist/
+*.egg-info/
+wheels/
+*.egg
+
+# --- Celery ---
+# Arquivos temporários e de estado do Celery.
+celerybeat-schedule
+*.pid
+
+# --- Arquivos de IDEs e Editores de Código ---
+# Configurações específicas da máquina do desenvolvedor.
+# Visual Studio Code
+.vscode/
+# PyCharm
+.idea/
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+# Vim
+*.swp
+*~
+
+# --- Arquivos do Sistema Operacional ---
+# Arquivos de metadados gerados por diferentes SOs.
+# macOS
+.DS_Store
+._*
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+/aa
