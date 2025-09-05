@@ -3,12 +3,13 @@
 import uuid
 import os
 import traceback
-from flask import request, jsonify, Blueprint, current_app
+from flask import request, jsonify, Blueprint, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
+from marshmallow import ValidationError
 
 from app import services
-from app.schemas import VideoSchema, VideoDetailSchema
+from app.schemas import VideoSchema, VideoDetailSchema, VideoUpdateSchema
 from app.tasks import process_video
 
 video_bp = Blueprint('video_api', __name__, url_prefix='/videos')
@@ -41,6 +42,32 @@ def upload_video():
         return upload_local_video()
     else:
         return initialize_s3_upload()
+    
+@video_bp.route('/<string:video_id>', methods=['PATCH'])
+@jwt_required()
+def update_video(video_id):
+    """Atualiza os detalhes de um vídeo (ex: título)."""
+    user_id = get_jwt_identity()
+    json_data = request.get_json()
+    if not json_data:
+        return jsonify({"error": "Nenhum dado de entrada fornecido"}), 400
+
+    try:
+        data = VideoUpdateSchema().load(json_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 422
+
+    try:
+        updated_video = services.update_video_details(video_id, user_id, data)
+        return jsonify(VideoSchema().dump(updated_video)), 200
+    except services.VideoServiceError as e:
+        error_message = str(e)
+        if "Acesso não permitido" in error_message or "Vídeo não encontrado" in error_message:
+            return jsonify({"error": "Vídeo não encontrado ou acesso não permitido."}), 404
+        return jsonify({"error": error_message}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "Ocorreu um erro inesperado."}), 500
 
 def initialize_s3_upload():
     user_id = get_jwt_identity()
@@ -116,3 +143,12 @@ def finalize_upload():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": "Ocorreu um erro inesperado ao finalizar o upload."}), 500
+    
+@video_bp.route('/stream/<path:filename>')
+def stream_video(filename):
+    """
+    Serve o ficheiro de vídeo diretamente da pasta de uploads.
+    Isto é usado pelo player de vídeo no frontend para o modo local.
+    """
+    videos_folder = os.path.join(current_app.config['LOCAL_STORAGE_PATH'], 'videos')
+    return send_from_directory(videos_folder, filename)

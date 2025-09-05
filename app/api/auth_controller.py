@@ -3,11 +3,11 @@
 import traceback
 from flask import request, jsonify, Blueprint
 from marshmallow import ValidationError
+from flask_jwt_extended import jwt_required, get_jwt_identity # Adicione get_jwt_identity
 
 from app import services
 from app.schemas import UserSchema, UserRegistrationSchema
 
-# Cria um Blueprint. Blueprints são como "mini-aplicações" que podemos registrar na app principal.
 auth_bp = Blueprint('auth_api', __name__, url_prefix='/auth')
 
 @auth_bp.route('/register', methods=['POST'])
@@ -58,3 +58,17 @@ def login():
     except Exception as e:
         traceback.print_exc() # <- SUBSTITUA O COMENTÁRIO POR ISTO
         return jsonify({"error": "Ocorreu um erro inesperado."}), 500
+    
+@auth_bp.route('/profile', methods=['GET'])
+@jwt_required() # Protege a rota
+def profile():
+    """Retorna os dados do usuário autenticado."""
+    current_user_id = get_jwt_identity() # Extrai o ID do usuário do token
+    user = services.get_user_by_id(current_user_id)
+    
+    if not user:
+        traceback.print_exc()
+        return jsonify({"error": "Usuário não encontrado."}), 404
+        
+    user_schema = UserSchema()
+    return jsonify(user_schema.dump(user)), 200

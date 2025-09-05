@@ -4,7 +4,7 @@ from flask import Flask
 from celery import Celery, Task
 
 from config import config_by_name
-from .extensions import db, ma, migrate, jwt, cors
+from .extensions import db, ma, migrate, jwt, cors, socketio
 from .api import api_v2_bp # Importa o blueprint principal da API
 
 # Define o nome do nosso pacote de tarefas para o Celery
@@ -34,14 +34,16 @@ def create_app(config_name='development'):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
 
-    # Inicializa as extensões com a aplicação
     db.init_app(app)
     ma.init_app(app)
-    migrate.init_app(app, db) # Inicializa o Flask-Migrate
+    migrate.init_app(app, db)
     jwt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}}) # Configura o CORS
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+    
+    # --- ALTERAÇÃO AQUI ---
+    # Adicione a configuração da message_queue para o Socket.IO
+    socketio.init_app(app, cors_allowed_origins="*", message_queue=app.config["CELERY"]["broker_url"])
 
-    # Registra os Blueprints (nossos controllers da API)
     app.register_blueprint(api_v2_bp)
 
     return app

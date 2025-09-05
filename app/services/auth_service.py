@@ -56,3 +56,7 @@ def login_user(email, password):
     )
     
     return access_token
+
+def get_user_by_id(user_id):
+    """Busca um usuário pelo seu ID."""
+    return User.query.get(user_id)

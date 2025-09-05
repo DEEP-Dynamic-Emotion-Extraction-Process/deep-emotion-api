@@ -17,7 +17,7 @@ def create_video_record(user_id, title, s3_key):
             user_id=user_id,
             title=title,
             s3_key=s3_key,
-            status=VideoStatus.PENDING # Status inicial
+            status=VideoStatus.PENDING
         )
         db.session.add(new_video)
         db.session.commit()
@@ -55,13 +55,11 @@ def save_analysis_results(video_id, analysis_data):
         raise VideoServiceError("Vídeo não encontrado.")
     
     try:
-        # 1. Atualiza os metadados do vídeo principal
         video.frame_count = analysis_data.get('total_frames_analyzed', 0)
         video.duration_seconds = analysis_data.get('duration_seconds', 0.0)
         video.processed_at = datetime.utcnow()
         video.status = VideoStatus.COMPLETED
 
-        # 2. Cria os registros dos frames em lote
         frames_to_add = []
         for frame_data in analysis_data.get('frames', []):
             frame = Frame(
@@ -80,8 +78,31 @@ def save_analysis_results(video_id, analysis_data):
         return video
     except Exception as e:
         db.session.rollback()
-        # Se algo der errado, marca o vídeo como FAILED
         video.status = VideoStatus.FAILED
         db.session.commit()
         print(f"Erro ao salvar resultados da análise: {e}")
         raise VideoServiceError("Falha ao salvar os resultados da análise.")
+
+# --- ADICIONE ESTA NOVA FUNÇÃO ---
+def update_video_details(video_id, user_id, data):
+    """
+    Atualiza os detalhes de um vídeo, como o título.
+    Verifica se o vídeo pertence ao usuário.
+    """
+    video = get_video_by_id(video_id)
+    if not video:
+        raise VideoServiceError("Vídeo não encontrado.")
+    
+    if str(video.user_id) != str(user_id):
+        raise VideoServiceError("Acesso não permitido.")
+
+    try:
+        if 'title' in data:
+            video.title = data['title']
+        
+        db.session.commit()
+        return video
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erro ao atualizar detalhes do vídeo: {e}")
+        raise VideoServiceError("Não foi possível atualizar os detalhes do vídeo.")

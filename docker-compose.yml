@@ -1,7 +1,6 @@
 # docker-compose.yml
 
 services:
-  # Serviço do Redis: Nosso message broker para o Celery
   redis:
     image: redis:7-alpine
     container_name: deep_redis
@@ -9,20 +8,23 @@ services:
     ports:
       - "6379:6379"
 
-  # NOVO: Serviço do Banco de Dados MySQL
   db:
     image: mysql:8.0
     container_name: deep_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD} # Vem do .env
-      MYSQL_DATABASE: ${DB_NAME}         # Vem do .env
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Serviço da API Flask: Roda o servidor web Gunicorn
   api:
     container_name: deep_api
     build: .
@@ -31,23 +33,24 @@ services:
       - "5000:5000"
     volumes:
       - .:/app
-      - local_uploads:/app/uploads # Volume para uploads locais
+      - local_uploads:/app/uploads
     env_file:
       - .env
     command: >
-      sh -c "flask db upgrade && gunicorn --bind 0.0.0.0:5000 run:app"
+      sh -c "flask db upgrade && gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --bind 0.0.0.0:5000 run:app"
     depends_on:
-      - redis
-      - db # Garante que o DB inicie antes da API
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
 
-  # Serviço do Celery Worker: Roda o processo que consome as tarefas
   worker:
     container_name: deep_worker
     build: .
     restart: unless-stopped
     volumes:
       - .:/app
-      - local_uploads:/app/uploads # Compartilha o mesmo volume
+      - local_uploads:/app/uploads
     env_file:
       - .env
     command: celery -A celery_worker.celery worker --loglevel=info
@@ -55,7 +58,6 @@ services:
       - redis
       - api
 
-# NOVO: Define os volumes
 volumes:
   mysql_data:
   local_uploads:
