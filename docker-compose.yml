@@ -1,7 +1,5 @@
 # docker-compose.yml
 
-version: '3.8'
-
 services:
   # Serviço do Redis: Nosso message broker para o Celery
   redis:
@@ -9,37 +7,55 @@ services:
     container_name: deep_redis
     restart: unless-stopped
     ports:
-      # Expondo a porta para o host (opcional, útil para debug)
       - "6379:6379"
+
+  # NOVO: Serviço do Banco de Dados MySQL
+  db:
+    image: mysql:8.0
+    container_name: deep_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD} # Vem do .env
+      MYSQL_DATABASE: ${DB_NAME}         # Vem do .env
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
 
   # Serviço da API Flask: Roda o servidor web Gunicorn
   api:
     container_name: deep_api
-    build: .  # Constrói a imagem usando o Dockerfile na pasta atual
+    build: .
     restart: unless-stopped
     ports:
-      - "5000:5000" # Mapeia a porta 5000 do host para a 5000 do contêiner
+      - "5000:5000"
     volumes:
-      # Monta o código local no contêiner para desenvolvimento (hot-reload)
       - .:/app
+      - local_uploads:/app/uploads # Volume para uploads locais
     env_file:
-      # Carrega as variáveis de ambiente do arquivo .env
       - .env
     command: >
       sh -c "flask db upgrade && gunicorn --bind 0.0.0.0:5000 run:app"
     depends_on:
-      - redis # Garante que o Redis inicie antes da API
+      - redis
+      - db # Garante que o DB inicie antes da API
 
   # Serviço do Celery Worker: Roda o processo que consome as tarefas
   worker:
     container_name: deep_worker
-    build: . # Usa a mesma imagem da API
+    build: .
     restart: unless-stopped
     volumes:
       - .:/app
+      - local_uploads:/app/uploads # Compartilha o mesmo volume
     env_file:
       - .env
     command: celery -A celery_worker.celery worker --loglevel=info
     depends_on:
       - redis
-      - api # Garante que a API (e o DB) esteja pronta antes de começar a processar
+      - api
+
+# NOVO: Define os volumes
+volumes:
+  mysql_data:
+  local_uploads:

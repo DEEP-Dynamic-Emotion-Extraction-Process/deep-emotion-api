@@ -1,7 +1,7 @@
 # app/schemas/video_schema.py
 from app.extensions import ma
 from app.models import Video, VideoStatus
-from marshmallow import fields
+from marshmallow import fields, validate
 from .frame_schema import FrameSchema
 
 class VideoSchema(ma.SQLAlchemyAutoSchema):
