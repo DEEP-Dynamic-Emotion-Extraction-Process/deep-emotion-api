@@ -78,7 +78,7 @@ def s3_download_file(bucket_name, object_name, destination_path):
         print(f"Erro ao baixar arquivo do S3: {e}")
         return False
 
-# --- Dispatchers ---
+# --- Dispatchers (Decidem qual função usar) ---
 
 def generate_presigned_upload_url(object_name, expiration=3600):
     storage_type = current_app.config.get('STORAGE_TYPE', 's3')
@@ -86,14 +86,6 @@ def generate_presigned_upload_url(object_name, expiration=3600):
         return local_generate_presigned_upload_url(object_name)
     else:
         return s3_generate_presigned_upload_url(object_name, expiration)
-
-def generate_presigned_get_url(object_name, expiration=3600):
-    storage_type = current_app.config.get('STORAGE_TYPE', 's3')
-    if storage_type == 'local':
-        filename = os.path.basename(object_name)
-        return url_for('api_v2.video_api.stream_video', filename=filename, _external=True)
-    else:
-        return s3_generate_presigned_get_url(object_name, expiration)
 
 def download_video_from_s3(video_s3_key, destination_path):
     storage_type = current_app.config.get('STORAGE_TYPE', 's3')

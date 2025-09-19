@@ -3,7 +3,7 @@
 import uuid
 import os
 import traceback
-from flask import request, jsonify, Blueprint, current_app, send_from_directory
+from flask import request, jsonify, Blueprint, current_app, send_from_directory, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from marshmallow import ValidationError
@@ -33,8 +33,13 @@ def get_video_details(video_id):
 
     video_dump = VideoDetailSchema().dump(video)
     
-    # Gera a URL de visualização correta (local ou S3)
-    video_dump['video_url'] = services.generate_presigned_get_url(video.s3_key)
+    # --- LÓGICA DE DECISÃO CORRIGIDA ---
+    storage_type = current_app.config.get('STORAGE_TYPE', 's3')
+    if storage_type == 's3':
+        video_dump['video_url'] = services.s3_generate_presigned_get_url(video.s3_key)
+    else:
+        filename = os.path.basename(video.s3_key)
+        video_dump['video_url'] = url_for('api_v2.video_api.stream_video', filename=filename, _external=True)
 
     return jsonify(video_dump), 200
 
@@ -50,7 +55,6 @@ def upload_video():
 @video_bp.route('/<string:video_id>', methods=['PATCH'])
 @jwt_required()
 def update_video(video_id):
-    """Atualiza os detalhes de um vídeo (ex: título)."""
     user_id = get_jwt_identity()
     json_data = request.get_json()
     if not json_data:
