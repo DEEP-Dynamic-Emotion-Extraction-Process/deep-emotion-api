@@ -22,7 +22,7 @@ CLASS_NAMES = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprised
 model = None
 
 def load_model():
-    """Carrega o modelo de IA, baixando-o do S3 se necessário."""
+    """Carrega o modelo de IA, baixando-o se necessário."""
     global model
     if model is None:
         try:
@@ -40,7 +40,7 @@ def load_model():
     return model
 
 def predict_emotion(img_path, model_instance):
-    """Refatoração da sua função de predição de emoção."""
+    """Prediz a emoção de uma imagem de frame."""
     if model_instance is None: 
         return "disabled", 0.0
     try:
@@ -64,22 +64,20 @@ def process_video(self, video_id):
     
     ml_model = load_model()
     temp_dir = tempfile.mkdtemp()
+    local_video_path = os.path.join(temp_dir, 'video_to_process.mp4')
     
     try:
-        # A app_context é necessária para aceder à configuração, como o LOCAL_STORAGE_PATH
         with current_app.app_context():
             video = services.get_video_by_id(video_id)
             if not video:
                 print(f"Vídeo com ID {video_id} não encontrado.")
                 return
 
-            # Emitir evento de início usando a nova instância socketio_celery
             socketio_celery.emit('processing_update', {'video_id': video_id, 'status': 'PROCESSING', 'progress': 5})
             services.update_video_status(video_id, 'PROCESSING')
 
-            local_video_path = os.path.join(current_app.config['LOCAL_STORAGE_PATH'], 'videos', os.path.basename(video.s3_key))
-            if not os.path.exists(local_video_path):
-                raise IOError(f"Ficheiro de vídeo local não encontrado: {local_video_path}")
+            if not services.download_video_from_s3(video.s3_key, local_video_path):
+                raise IOError(f"Falha ao baixar o vídeo: {video.s3_key}")
 
             cap = cv2.VideoCapture(local_video_path)
             if not cap.isOpened(): 
@@ -93,7 +91,7 @@ def process_video(self, video_id):
                 raise ValueError(f"Vídeo excede a duração máxima de {MAX_VIDEO_DURATION_SECONDS}s.")
 
             frame_interval = int(video_fps / TARGET_FPS) if video_fps > TARGET_FPS else 1
-            total_frames_to_process = total_frames / frame_interval
+            total_frames_to_process = total_frames / frame_interval if frame_interval > 0 else total_frames
             
             frame_results = []
             c_frame, saved_count = 0, 0
@@ -136,7 +134,6 @@ def process_video(self, video_id):
     except Exception as e:
         print(f"ERRO ao processar vídeo {video_id}: {e}")
         socketio_celery.emit('processing_update', {'video_id': video_id, 'status': 'FAILED', 'progress': 0})
-        # Precisamos de um app_context aqui também para a chamada de serviço
         with current_app.app_context():
             services.update_video_status(video_id, 'FAILED')
     finally:

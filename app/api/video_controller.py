@@ -31,8 +31,12 @@ def get_video_details(video_id):
     if not video or video.user_id != user_id:
         return jsonify({"error": "Vídeo não encontrado ou acesso não permitido."}), 404
 
-    video_detail_schema = VideoDetailSchema()
-    return jsonify(video_detail_schema.dump(video)), 200
+    video_dump = VideoDetailSchema().dump(video)
+    
+    # Gera a URL de visualização correta (local ou S3)
+    video_dump['video_url'] = services.generate_presigned_get_url(video.s3_key)
+
+    return jsonify(video_dump), 200
 
 @video_bp.route('/upload', methods=['POST'])
 @jwt_required()

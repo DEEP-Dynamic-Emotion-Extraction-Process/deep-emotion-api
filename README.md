@@ -112,9 +112,12 @@ A API está versionada e todos os endpoints estão sob o prefixo `/api/v2`.
 
 | Endpoint | Método | Protegido? | Descrição |
 |---|---|---|---|
-| `/auth/register` | `POST` | Não | Registra um novo usuário. |
-| `/auth/login` | `POST` | Não | Autentica um usuário e retorna um token JWT. |
-| `/videos/upload/initialize` | `POST` | **Sim** | Inicia o fluxo de upload, retornando uma URL do S3. |
-| `/videos/upload/finalize` | `POST` | **Sim** | Finaliza o upload e dispara o processamento. |
-| `/videos/` | `GET` | **Sim** | Lista todos os vídeos do usuário autenticado. |
-| `/videos/<video_id>` | `GET` | **Sim** | Retorna os detalhes e a análise de um vídeo específico. |
+| `/auth/register` | `POST` | Não | Registra um novo utilizador. |
+| `/auth/login` | `POST` | Não | Autentica um utilizador e retorna um token JWT. |
+| `/auth/profile` | `GET` | **Sim** | Retorna os dados do utilizador autenticado. |
+| `/videos/upload` | `POST` | **Sim** | Inicia o upload. O comportamento muda com `STORAGE_TYPE`: em `s3`, retorna uma URL pré-assinada; em `local`, recebe o ficheiro diretamente. |
+| `/videos/upload/finalize` | `POST` | **Sim** | (Apenas em modo `s3`) Finaliza o upload e dispara o processamento. |
+| `/videos/` | `GET` | **Sim** | Lista todos os vídeos do utilizador autenticado. |
+| `/videos/<video_id>` | `GET` | **Sim** | Retorna os detalhes e a análise de um vídeo específico, incluindo uma `video_url` para visualização. |
+| `/videos/<video_id>` | `PATCH`| **Sim** | Atualiza detalhes de um vídeo, como o seu título. |
+| `/videos/stream/<filename>` | `GET` | Não | (Apenas em modo `local`) Serve um ficheiro de vídeo para o frontend. |

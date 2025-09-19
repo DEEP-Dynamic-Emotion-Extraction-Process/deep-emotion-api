@@ -78,7 +78,7 @@ def s3_download_file(bucket_name, object_name, destination_path):
         print(f"Erro ao baixar arquivo do S3: {e}")
         return False
 
-# --- Dispatchers (Decidem qual função usar) ---
+# --- Dispatchers ---
 
 def generate_presigned_upload_url(object_name, expiration=3600):
     storage_type = current_app.config.get('STORAGE_TYPE', 's3')

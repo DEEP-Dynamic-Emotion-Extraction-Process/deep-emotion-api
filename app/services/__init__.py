@@ -10,6 +10,7 @@ from .auth_service import (
 
 from .s3_service import (
     generate_presigned_upload_url,
+    generate_presigned_get_url, # <-- LINHA ADICIONADA
     download_video_from_s3,
     download_model_from_s3
 )
@@ -31,6 +32,7 @@ __all__ = [
     'RegistrationError',
     'LoginError',
     'generate_presigned_upload_url',
+    'generate_presigned_get_url', # <-- LINHA ADICIONADA
     'download_video_from_s3',
     'download_model_from_s3',
     'create_video_record',
