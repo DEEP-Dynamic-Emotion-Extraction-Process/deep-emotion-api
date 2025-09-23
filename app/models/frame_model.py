@@ -10,6 +10,7 @@ class EmotionEnum(enum.Enum):
     NEUTRAL = 'NEUTRAL'
     FEAR = 'FEAR'
     DISGUST = 'DISGUST'
+    UNIDENTIFIED = 'UNIDENTIFIED'
 
 class Frame(db.Model):
     __tablename__ = 'frames'

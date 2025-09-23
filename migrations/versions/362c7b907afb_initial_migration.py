@@ -59,7 +59,7 @@ def upgrade():
     sa.Column('video_id', sa.String(length=36), nullable=False),
     sa.Column('frame_number', sa.Integer(), nullable=False),
     sa.Column('video_timestamp_sec', sa.Float(), nullable=False),
-    sa.Column('emotion', sa.Enum('HAPPY', 'SAD', 'ANGRY', 'SURPRISED', 'NEUTRAL', 'FEAR', 'DISGUST', name='emotionenum'), nullable=False),
+    sa.Column('emotion', sa.Enum('HAPPY', 'SAD', 'ANGRY', 'SURPRISED', 'NEUTRAL', 'FEAR', 'DISGUST', 'UNIDENTIFIED', name='emotionenum'), nullable=False),
     sa.Column('confidence', sa.Float(), nullable=False),
     sa.ForeignKeyConstraint(['video_id'], ['videos.id'], ),
     sa.PrimaryKeyConstraint('id'),

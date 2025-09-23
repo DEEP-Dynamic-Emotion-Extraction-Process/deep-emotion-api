@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     __tablename__ = 'users'
-
+    # test comment
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -14,9 +14,6 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relacionamentos:
-    # 'cascade' garante que os vídeos e logs de um usuário sejam deletados se o usuário for deletado.
-    # 'lazy='dynamic'' retorna um objeto de query, útil para coleções grandes.
     videos = db.relationship('Video', back_populates='user', lazy='dynamic', cascade="all, delete-orphan")
     logs = db.relationship('Log', back_populates='user', lazy='dynamic', cascade="all, delete-orphan")
 
