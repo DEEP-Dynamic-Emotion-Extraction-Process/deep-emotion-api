@@ -19,7 +19,7 @@ class Frame(db.Model):
     video_id = db.Column(db.String(36), db.ForeignKey('videos.id'), nullable=False)
     frame_number = db.Column(db.Integer, nullable=False)
     video_timestamp_sec = db.Column(db.Float, nullable=False)
-    emotion = db.Column(db.Enum(EmotionEnum), nullable=False)
+    emotion = db.Column(db.Enum(EmotionEnum, native_enum=False), nullable=False)
     confidence = db.Column(db.Float, nullable=False)
 
     # Relacionamento

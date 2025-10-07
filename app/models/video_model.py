@@ -18,7 +18,7 @@ class Video(db.Model):
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     s3_key = db.Column(db.String(255), unique=True, nullable=False)
-    status = db.Column(db.Enum(VideoStatus), nullable=False, default=VideoStatus.PENDING)
+    status = db.Column(db.Enum(VideoStatus, native_enum=False), nullable=False, default=VideoStatus.PENDING)
     frame_count = db.Column(db.Integer, default=0)
     duration_seconds = db.Column(db.Float, default=0.0)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
