@@ -1,16 +1,6 @@
 # app/models/frame_model.py
-import enum
 from app.extensions import db
-
-class EmotionEnum(enum.Enum):
-    HAPPY = 'HAPPY'
-    SAD = 'SAD'
-    ANGRY = 'ANGRY'
-    SURPRISED = 'SURPRISED'
-    NEUTRAL = 'NEUTRAL'
-    FEAR = 'FEAR'
-    DISGUST = 'DISGUST'
-    UNIDENTIFIED = 'UNIDENTIFIED'
+from sqlalchemy.dialects.mysql import JSON # Importe o tipo JSON
 
 class Frame(db.Model):
     __tablename__ = 'frames'
@@ -19,10 +9,11 @@ class Frame(db.Model):
     video_id = db.Column(db.String(36), db.ForeignKey('videos.id'), nullable=False)
     frame_number = db.Column(db.Integer, nullable=False)
     video_timestamp_sec = db.Column(db.Float, nullable=False)
-    emotion = db.Column(db.Enum(EmotionEnum, native_enum=False), nullable=False)
-    confidence = db.Column(db.Float, nullable=False)
+    
+    # Coluna JSON para armazenar todas as emoções e confianças
+    emotions = db.Column(JSON, nullable=True)
 
-    # Relacionamento
+    # Relacionamento (usa uma string 'Video' para evitar importações circulares)
     video = db.relationship('Video', back_populates='frames')
 
     # Garante que a combinação de video_id e frame_number seja única

@@ -1,7 +1,7 @@
 # app/services/video_service.py
 
 from app.extensions import db
-from app.models import Video, Frame, VideoStatus, EmotionEnum
+from app.models import Video, Frame, VideoStatus
 from datetime import datetime
 
 class VideoServiceError(Exception):
@@ -40,7 +40,7 @@ def update_video_status(video_id, new_status):
     video = get_video_by_id(video_id)
     if not video:
         raise VideoServiceError("Vídeo não encontrado.")
-    
+
     video.status = new_status
     db.session.commit()
     return video
@@ -53,7 +53,7 @@ def save_analysis_results(video_id, analysis_data):
     video = get_video_by_id(video_id)
     if not video:
         raise VideoServiceError("Vídeo não encontrado.")
-    
+
     try:
         video.frame_count = analysis_data.get('total_frames_analyzed', 0)
         video.duration_seconds = analysis_data.get('duration_seconds', 0.0)
@@ -66,11 +66,10 @@ def save_analysis_results(video_id, analysis_data):
                 video_id=video.id,
                 frame_number=frame_data['frame_number'],
                 video_timestamp_sec=frame_data['timestamp'],
-                emotion=EmotionEnum[frame_data['emotion'].upper()],
-                confidence=frame_data['confidence']
+                emotions=frame_data['emotions'] # Grava o dicionário JSON
             )
             frames_to_add.append(frame)
-        
+
         if frames_to_add:
             db.session.bulk_save_objects(frames_to_add)
 
@@ -83,7 +82,6 @@ def save_analysis_results(video_id, analysis_data):
         print(f"Erro ao salvar resultados da análise: {e}")
         raise VideoServiceError("Falha ao salvar os resultados da análise.")
 
-# --- ADICIONE ESTA NOVA FUNÇÃO ---
 def update_video_details(video_id, user_id, data):
     """
     Atualiza os detalhes de um vídeo, como o título.
@@ -92,14 +90,14 @@ def update_video_details(video_id, user_id, data):
     video = get_video_by_id(video_id)
     if not video:
         raise VideoServiceError("Vídeo não encontrado.")
-    
+
     if str(video.user_id) != str(user_id):
         raise VideoServiceError("Acesso não permitido.")
 
     try:
         if 'title' in data:
             video.title = data['title']
-        
+
         db.session.commit()
         return video
     except Exception as e:
